@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/obanoff/pokedexcli/internals/config"
 )
@@ -14,7 +15,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Print("pokedex > ")
+		fmt.Print("Pokedex > ")
 
 		scanner.Scan()
 		err := scanner.Err()
@@ -24,7 +25,14 @@ func main() {
 
 		cmd := scanner.Text()
 
-		err = app.Commands.Run(cmd)
+		parts := strings.Fields(cmd)
+
+		switch len(parts) {
+		case 2:
+			err = app.Commands.Run(parts[0], parts[1])
+		default:
+			err = app.Commands.Run(cmd, "")
+		}
 		if err != nil {
 			fmt.Println(err)
 		}

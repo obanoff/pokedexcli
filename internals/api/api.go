@@ -10,7 +10,7 @@ import (
 	"github.com/obanoff/pokedexcli/internals/cache"
 )
 
-var locationCache *cache.Cache = cache.NewCache(10 * time.Second)
+var apiCache *cache.Cache = cache.NewCache(20 * time.Second)
 
 type Location struct {
 	Id   int    `json:"id"`
@@ -34,7 +34,7 @@ func GetLocations(url string) (*Locations, error) {
 
 	var locations *Locations
 
-	data, ok := locationCache.Get(url)
+	data, ok := apiCache.Get(url)
 	if !ok {
 		resp, err := client.Get(url)
 		if err != nil {
@@ -47,8 +47,10 @@ func GetLocations(url string) (*Locations, error) {
 			return nil, fmt.Errorf("error reading data from response: %w", err)
 		}
 
-		locationCache.Add(url, data)
 	}
+
+	// overwrite cache after the visit data to prolong existence
+	apiCache.Add(url, data)
 
 	err := json.Unmarshal(data, &locations)
 	if err != nil {
@@ -57,4 +59,49 @@ func GetLocations(url string) (*Locations, error) {
 
 	return locations, nil
 
+}
+
+type Pokemons struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
+func GetPokemonsByLocation(location string) (*Pokemons, error) {
+	if len(location) == 0 {
+		return nil, fmt.Errorf("location area not provided")
+	}
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", location)
+
+	data, ok := apiCache.Get(url)
+	if !ok {
+		resp, err := client.Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("error making request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("error reading data from response: %w", err)
+		}
+	}
+
+	apiCache.Add(url, data)
+
+	var pokemons *Pokemons
+
+	err := json.Unmarshal(data, &pokemons)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding json: %w", err)
+	}
+
+	return pokemons, nil
 }

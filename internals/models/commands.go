@@ -11,7 +11,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(string) error
 }
 
 type params struct {
@@ -32,19 +32,19 @@ func NewCommandRegistry() CommandRegistry {
 	}
 
 	// help command
-	cmdr.addCommand("help", "prints a help message describing how to use the REPL", func() error {
+	cmdr.addCommand("help", "prints a help message describing how to use the REPL", func(location string) error {
 		fmt.Print("Usege: \n\nhelp: Displays a help message\nexit: Exit the Pokedex\n\n")
 		return nil
 	})
 
 	// exit command
-	cmdr.addCommand("exit", "exits the program", func() error {
+	cmdr.addCommand("exit", "exits the program", func(location string) error {
 		os.Exit(0)
 		return nil
 	})
 
 	// map command
-	cmdr.addCommand("map", "displays the names of 20 location in the Pokemon world; each subsequent call displays the next 20", func() error {
+	cmdr.addCommand("map", "displays the names of 20 location in the Pokemon world; each subsequent call displays the next 20", func(location string) error {
 		var err error
 
 		if cmdr.params.locations == nil {
@@ -71,7 +71,7 @@ func NewCommandRegistry() CommandRegistry {
 	})
 
 	// mapb command
-	cmdr.addCommand("mapb", "displays the names of 20 previous locations in the Pokemon world", func() error {
+	cmdr.addCommand("mapb", "displays the names of 20 previous locations in the Pokemon world", func(location string) error {
 		var err error
 
 		if cmdr.params.locations == nil || cmdr.params.locations.Prev == "" {
@@ -90,10 +90,28 @@ func NewCommandRegistry() CommandRegistry {
 		return nil
 	})
 
+	// explore command requires location area as its parameter
+	cmdr.addCommand("explore", "displays pokemons in a given area", func(location string) error {
+		var err error
+
+		result, err := api.GetPokemonsByLocation(location)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Exploring %s...\nFound Pokemon:\n", location)
+
+		for _, pe := range result.PokemonEncounters {
+			fmt.Printf(" - %s\n", pe.Pokemon.Name)
+		}
+
+		return nil
+	})
+
 	return cmdr
 }
 
-func (cd *CommandRegistry) addCommand(name, description string, callback func() error) {
+func (cd *CommandRegistry) addCommand(name, description string, callback func(location string) error) {
 	cd.commands[name] = cliCommand{
 		name:        name,
 		description: description,
@@ -101,9 +119,9 @@ func (cd *CommandRegistry) addCommand(name, description string, callback func() 
 	}
 }
 
-func (cd *CommandRegistry) Run(name string) error {
+func (cd *CommandRegistry) Run(name, location string) error {
 	if _, ok := cd.commands[name]; !ok {
 		return errors.New("\ncommand not found\n")
 	}
-	return cd.commands[name].callback()
+	return cd.commands[name].callback(location)
 }
