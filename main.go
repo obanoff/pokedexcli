@@ -6,23 +6,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/obanoff/pokedexcli/internals/models"
+	"github.com/obanoff/pokedexcli/internals/config"
 )
 
 func main() {
-	cmdRegistry := models.NewCommandRegistry()
-
-	cmdRegistry.AddCommand("help", "prints a help message describing how to use the REPL", func() error {
-		fmt.Println("Usege: ")
-		return nil
-	})
-
-	cmdRegistry.AddCommand("exit", "exits the program", func() error {
-		os.Exit(0)
-		return nil
-	})
-
+	app := config.NewAppConfig()
 	scanner := bufio.NewScanner(os.Stdin)
+
 	for {
 		fmt.Print("pokedex > ")
 
@@ -34,7 +24,7 @@ func main() {
 
 		cmd := scanner.Text()
 
-		err = cmdRegistry.Run(cmd)
+		err = app.Commands.Run(cmd)
 		if err != nil {
 			fmt.Println(err)
 		}
