@@ -7,12 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/obanoff/pokedexcli/internals/config"
+	"github.com/obanoff/pokedexcli/internals/models"
 )
 
 func main() {
-	app := config.NewAppConfig()
 	scanner := bufio.NewScanner(os.Stdin)
+
+	cmdRegistry := models.NewCommandRegistry()
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -29,9 +30,9 @@ func main() {
 
 		switch len(parts) {
 		case 2:
-			err = app.Commands.Run(parts[0], parts[1])
+			err = cmdRegistry.Run(parts[0], parts[1])
 		default:
-			err = app.Commands.Run(cmd, "")
+			err = cmdRegistry.Run(cmd, "")
 		}
 		if err != nil {
 			fmt.Println(err)

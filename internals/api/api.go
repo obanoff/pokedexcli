@@ -105,3 +105,49 @@ func GetPokemonsByLocation(location string) (*Pokemons, error) {
 
 	return pokemons, nil
 }
+
+type Pokemon struct {
+	Name           string `json:"name"`
+	Height         int    `json:"height"`
+	Weight         int    `json:"weight"`
+	BaseExperience int    `json:"base_experience"`
+	Stats          []struct {
+		Name string `json:"name"`
+	} `json:"stats"`
+	Types []struct {
+		Name string `json:"name"`
+	} `json:"types"`
+}
+
+func GetPokemonByName(name string) (*Pokemon, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", name)
+
+	data, ok := apiCache.Get(url)
+	if !ok {
+		resp, err := client.Get(url)
+		if err != nil {
+			return nil, fmt.Errorf("error making request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("error reading data from response: %w", err)
+		}
+	}
+
+	apiCache.Add(url, data)
+
+	var pokemon *Pokemon
+
+	err := json.Unmarshal(data, &pokemon)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding json: %w", err)
+	}
+
+	return pokemon, nil
+}
