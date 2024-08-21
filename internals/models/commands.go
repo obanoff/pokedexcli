@@ -152,6 +152,35 @@ func NewCommandRegistry() CommandRegistry {
 		return nil
 	})
 
+	// inspect caught pokemon by name
+	cmdr.addCommand("inspect", "inspect caught pokemon by name", func(param string) error {
+		if len(param) == 0 {
+			return errors.New("pokemon not provided")
+		}
+
+		pokemon, ok := cmdr.data.pokemons[param]
+		if !ok {
+			return errors.New("you have not caught that pokemon")
+		}
+
+		fmt.Printf(`Name: %s
+Height: %v
+Weight: %v
+`, pokemon.Name, pokemon.Height, pokemon.Weight)
+
+		fmt.Println("Stats:")
+		for _, s := range pokemon.Stats {
+			fmt.Printf("  -%s: %v\n", s.Stat.Name, s.Value)
+		}
+
+		fmt.Println("Types:")
+		for _, t := range pokemon.Types {
+			fmt.Printf("  -%s\n", t.Type.Name)
+		}
+
+		return nil
+	})
+
 	return cmdr
 }
 
