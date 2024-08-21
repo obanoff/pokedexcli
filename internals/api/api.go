@@ -70,10 +70,6 @@ type Pokemons struct {
 }
 
 func GetPokemonsByLocation(location string) (*Pokemons, error) {
-	if len(location) == 0 {
-		return nil, fmt.Errorf("location area not provided")
-	}
-
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -87,6 +83,10 @@ func GetPokemonsByLocation(location string) (*Pokemons, error) {
 			return nil, fmt.Errorf("error making request: %w", err)
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("location area not found")
+		}
 
 		data, err = io.ReadAll(resp.Body)
 		if err != nil {
@@ -112,10 +112,14 @@ type Pokemon struct {
 	Weight         int    `json:"weight"`
 	BaseExperience int    `json:"base_experience"`
 	Stats          []struct {
-		Name string `json:"name"`
+		Stat struct {
+			Name string `json:"name"`
+		} `json:"stat"`
 	} `json:"stats"`
 	Types []struct {
-		Name string `json:"name"`
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
 	} `json:"types"`
 }
 
@@ -133,6 +137,10 @@ func GetPokemonByName(name string) (*Pokemon, error) {
 			return nil, fmt.Errorf("error making request: %w", err)
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("pokemon not found")
+		}
 
 		data, err = io.ReadAll(resp.Body)
 		if err != nil {

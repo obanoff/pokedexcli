@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/obanoff/pokedexcli/internals/api"
@@ -100,9 +101,12 @@ func NewCommandRegistry() CommandRegistry {
 	cmdr.addCommand("explore", "displays pokemons in a given area", func(param string) error {
 		var err error
 
+		if len(param) == 0 {
+			return errors.New("location are not provided")
+		}
+
 		result, err := api.GetPokemonsByLocation(param)
 		if err != nil {
-			fmt.Println("area not found")
 			return err
 		}
 
@@ -117,12 +121,14 @@ func NewCommandRegistry() CommandRegistry {
 
 	// catch command requires name as its parameter
 	cmdr.addCommand("catch", "tries to catch a pokemon by its name", func(param string) error {
-
 		var err error
+
+		if len(param) == 0 {
+			return errors.New("pokemon name not provided")
+		}
 
 		result, err := api.GetPokemonByName(param)
 		if err != nil {
-			fmt.Println("pokemon not found")
 			return err
 		}
 
@@ -158,8 +164,10 @@ func (cd *CommandRegistry) addCommand(name, description string, callback func(pa
 }
 
 func (cd *CommandRegistry) Run(name, param string) error {
+	name, param = strings.TrimSpace(name), strings.TrimSpace(param)
+
 	if _, ok := cd.commands[name]; !ok {
-		return errors.New("\ncommand not found\n")
+		return errors.New("command not found")
 	}
 	return cd.commands[name].callback(param)
 }

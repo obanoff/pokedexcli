@@ -35,7 +35,7 @@ func main() {
 			err = cmdRegistry.Run(cmd, "")
 		}
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("%s\n", err)
 		}
 
 	}
