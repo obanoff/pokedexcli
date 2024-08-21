@@ -51,7 +51,11 @@ func NewCommandRegistry() CommandRegistry {
 	})
 
 	// map command
-	cmdr.addCommand("map", "displays the names of 20 param in the Pokemon world; each subsequent call displays the next 20", func(location string) error {
+	cmdr.addCommand("map", "displays the names of 20 param in the Pokemon world; each subsequent call displays the next 20", func(param string) error {
+		if len(param) > 0 {
+			return errors.New("command does not support arguments")
+		}
+
 		var err error
 
 		if cmdr.data.locations == nil {
@@ -79,6 +83,10 @@ func NewCommandRegistry() CommandRegistry {
 
 	// mapb command
 	cmdr.addCommand("mapb", "displays the names of 20 previous locations in the Pokemon world", func(param string) error {
+		if len(param) > 0 {
+			return errors.New("command does not support arguments")
+		}
+
 		var err error
 
 		if cmdr.data.locations == nil || cmdr.data.locations.Prev == "" {
@@ -176,6 +184,23 @@ Weight: %v
 		fmt.Println("Types:")
 		for _, t := range pokemon.Types {
 			fmt.Printf("  -%s\n", t.Type.Name)
+		}
+
+		return nil
+	})
+
+	cmdr.addCommand("pokedex", "list all the names of caught pokemon", func(param string) error {
+		if len(param) > 0 {
+			return errors.New("command does not support arguments")
+		}
+
+		if len(cmdr.data.pokemons) == 0 {
+			return errors.New("you have not caught pokemon")
+		}
+
+		fmt.Println("Your Pokedex:")
+		for _, v := range cmdr.data.pokemons {
+			fmt.Printf(" - %s\n", v.Name)
 		}
 
 		return nil
